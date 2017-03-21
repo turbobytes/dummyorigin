@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,53 @@ var (
 	logglyToken = os.Getenv("LOGGLY_TOKEN")
 	loggly      = logrus.New()
 )
+
+//Check/load static assets
+func init() {
+	flist := map[string]string{
+		"assets/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
+		"assets/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
+		"assets/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
+		"assets/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
+		"assets/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
+		"assets/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
+		"assets/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
+		"assets/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
+		"assets/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
+	}
+	//Ensure assets directory exists
+	os.Mkdir("assets", os.ModePerm)
+	for fname, url := range flist {
+		log.Println(fname, url)
+		if _, err := os.Stat(fname); os.IsNotExist(err) {
+			//Asset missing, download it.
+			dl(fname, url)
+		}
+	}
+
+}
+
+func dl(fname, url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if resp.StatusCode != 200 {
+		log.Fatal(resp.Status)
+	}
+	defer resp.Body.Close()
+	f, err := os.Create(fname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = io.Copy(f, resp.Body)
+	if err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		log.Fatal(err)
+	}
+	f.Close()
+}
 
 //Originally stollen from https://github.com/ajays20078/go-http-logger/blob/master/httpLogger.go
 //Adapted to loggly
