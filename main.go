@@ -81,7 +81,7 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	if w.status == 0 {
 		w.status = 200
 	}
-	w.length = len(b)
+	w.length += len(b)
 	return w.ResponseWriter.Write(b)
 }
 
@@ -95,7 +95,6 @@ func WriteLog(handle http.Handler) http.HandlerFunc {
 		latency := end.Sub(start)
 		statusCode := writer.status
 		length := writer.length
-
 		msg := make(map[string]interface{})
 		msg["reqHdr"] = request.Header
 		msg["respHdr"] = w.Header()
