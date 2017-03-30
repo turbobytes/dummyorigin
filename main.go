@@ -17,26 +17,29 @@ var (
 	logglyToken = os.Getenv("LOGGLY_TOKEN")
 	loggly      = logrus.New()
 	httpAddr    *string
+	assetPath   *string
 )
 
 //Check/load static assets
 func init() {
 	httpAddr = flag.String("http", ":80", "listen addr for http server")
+	assetPath = flag.String("assets", "assets", "listen addr for http server")
 	flag.Parse()
 	flist := map[string]string{
-		"assets/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
-		"assets/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
-		"assets/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
-		"assets/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
-		"assets/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
-		"assets/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
-		"assets/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
-		"assets/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
-		"assets/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
+		"/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
+		"/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
+		"/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
+		"/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
+		"/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
+		"/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
+		"/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
+		"/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
+		"/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
 	}
 	//Ensure assets directory exists
-	os.Mkdir("assets", os.ModePerm)
+	os.Mkdir(*assetPath, os.ModePerm)
 	for fname, url := range flist {
+		fname = *assetPath + fname
 		log.Println(fname, url)
 		if _, err := os.Stat(fname); os.IsNotExist(err) {
 			//Asset missing, download it.
@@ -130,7 +133,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	//w.Header().Set("content-type", "image/png")
 	w.Header().Set("X-TB-time", time.Now().String())
 	//w.Write(pixel)
-	http.ServeFile(w, r, "assets"+r.URL.Path)
+	http.ServeFile(w, r, *assetPath+r.URL.Path)
 }
 
 func main() {
