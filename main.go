@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net/http"
@@ -15,10 +16,13 @@ import (
 var (
 	logglyToken = os.Getenv("LOGGLY_TOKEN")
 	loggly      = logrus.New()
+	httpAddr    *string
 )
 
 //Check/load static assets
 func init() {
+	httpAddr = flag.String("http", ":80", "listen addr for http server")
+	flag.Parse()
 	flist := map[string]string{
 		"assets/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
 		"assets/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
@@ -135,5 +139,5 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	log.Fatal(http.ListenAndServe(":80", WriteLog(gziphandler.GzipHandler(http.DefaultServeMux))))
+	log.Fatal(http.ListenAndServe(*httpAddr, WriteLog(gziphandler.GzipHandler(http.DefaultServeMux))))
 }
