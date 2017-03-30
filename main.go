@@ -14,39 +14,47 @@ import (
 )
 
 var (
-	logglyToken = os.Getenv("LOGGLY_TOKEN")
-	loggly      = logrus.New()
-	httpAddr    *string
-	assetPath   *string
+	logglyToken   = os.Getenv("LOGGLY_TOKEN")
+	loggly        = logrus.New()
+	httpAddr      *string
+	assetPath     *string
+	fetchExit     *bool
+	noFetchAssets *bool
 )
 
 //Check/load static assets
 func init() {
 	httpAddr = flag.String("http", ":80", "listen addr for http server")
 	assetPath = flag.String("assets", "assets", "listen addr for http server")
+	fetchExit = flag.Bool("fetchonly", false, "Fetch assets and exit, i.e. no server")
+	noFetchAssets = flag.Bool("nofetch", false, "Do not fetch assets")
 	flag.Parse()
-	flist := map[string]string{
-		"/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
-		"/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
-		"/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
-		"/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
-		"/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
-		"/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
-		"/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
-		"/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
-		"/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
-	}
-	//Ensure assets directory exists
-	os.Mkdir(*assetPath, os.ModePerm)
-	for fname, url := range flist {
-		fname = *assetPath + fname
-		log.Println(fname, url)
-		if _, err := os.Stat(fname); os.IsNotExist(err) {
-			//Asset missing, download it.
-			dl(fname, url)
+	if !*noFetchAssets {
+		flist := map[string]string{
+			"/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
+			"/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
+			"/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
+			"/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
+			"/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
+			"/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
+			"/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
+			"/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
+			"/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
+		}
+		//Ensure assets directory exists
+		os.Mkdir(*assetPath, os.ModePerm)
+		for fname, url := range flist {
+			fname = *assetPath + fname
+			log.Println(fname, url)
+			if _, err := os.Stat(fname); os.IsNotExist(err) {
+				//Asset missing, download it.
+				dl(fname, url)
+			}
 		}
 	}
-
+	if *fetchExit {
+		os.Exit(0)
+	}
 }
 
 func dl(fname, url string) {
@@ -141,6 +149,6 @@ func main() {
 	loggly.Hooks.Add(hook)
 
 	http.HandleFunc("/", handler)
-
+	loggly.Infof("Starting server on %v", *httpAddr)
 	log.Fatal(http.ListenAndServe(*httpAddr, WriteLog(gziphandler.GzipHandler(http.DefaultServeMux))))
 }
