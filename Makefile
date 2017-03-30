@@ -1,4 +1,4 @@
-
+TAG=$(shell git rev-parse --short HEAD)
 
 all:
 	CGO_ENABLED=0 go build -o bin/dummyorigin main.go
@@ -7,4 +7,5 @@ ifeq ("$(IMAGE)","")
 	$(error IMAGE is not specified)
 else
 	docker build -t $(IMAGE) .
+	docker tag $(IMAGE) $(IMAGE):$(TAG)
 endif

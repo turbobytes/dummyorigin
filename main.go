@@ -25,9 +25,9 @@ var (
 //Check/load static assets
 func init() {
 	httpAddr = flag.String("http", ":80", "listen addr for http server")
-	assetPath = flag.String("assets", "assets", "listen addr for http server")
-	fetchExit = flag.Bool("fetchonly", false, "Fetch assets and exit, i.e. no server")
-	noFetchAssets = flag.Bool("nofetch", false, "Do not fetch assets")
+	assetPath = flag.String("assets", "assets", "Path to asset directory")
+	fetchExit = flag.Bool("fetchonly", false, "Fetch demo assets and exit, i.e. no server")
+	noFetchAssets = flag.Bool("nofetch", false, "Do not fetch demo assets")
 	flag.Parse()
 	if !*noFetchAssets {
 		flist := map[string]string{
