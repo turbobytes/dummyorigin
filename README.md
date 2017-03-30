@@ -38,3 +38,14 @@ To build an image with your own assets.
     IMAGE=username/dummyorigin make all
 
 This gives you a docker image called `username/dummyorigin`
+
+## Server behaviour
+
+When a server gets a request, it does the following.
+
+1. Add response header `Access-Control-Allow-Origin: *`
+2. It looks at querystrings and sets headers using key as header name and value as header value. so `?foo=bar` would become `Foo: bar`. Header names are canonicalized as per `net/http`
+3. It adds response header `X-Tb-Time` with current time. This is done because most proxies override the `Date` header.
+4. [http.ServeFile](https://golang.org/pkg/net/http/#ServeFile). 404 if resource is missing, 301 to `/` for index.html. `http.ServeFile` might decide to overwrite some headers set in step 2
+5. [gziphandler.GzipHandler](https://godoc.org/github.com/NYTimes/gziphandler#GzipHandler) from package `github.com/nytimes/gziphandler` handles gzip. TODO: #3, this needs some work.
+6. The request and response details are written to console and optionally to [loggly](https://www.loggly.com/) if `LOGGLY_TOKEN` environment variable is set.
