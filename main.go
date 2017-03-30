@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -20,6 +21,14 @@ var (
 	assetPath     *string
 	fetchExit     *bool
 	noFetchAssets *bool
+	//Since we are deciding to gzip based on the properties of the request, we can't use content-type.
+	//Using file extensions...
+	gzipTypes = []string{
+		".html",
+		".css",
+		".js",
+		".json",
+	}
 )
 
 //Check/load static assets
@@ -144,11 +153,39 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, *assetPath+r.URL.Path)
 }
 
+//gzipfilterhandler is proxy to gziphandler.GzipHandler to only compress certain types
+type gzipfilterhandler struct {
+	gziphandler http.Handler
+	original    http.Handler
+}
+
+func newgzipfilterhandler(h http.Handler) *gzipfilterhandler {
+	return &gzipfilterhandler{gziphandler.GzipHandler(h), h}
+}
+
+func isGzipable(path string) bool {
+	for _, typ := range gzipTypes {
+		if strings.HasSuffix(path, typ) {
+			return true
+		}
+	}
+	return false
+}
+
+func (gz *gzipfilterhandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	//Select based on file extension if we want to pass to gziphandler.GzipHandler or serve directly
+	if isGzipable(r.URL.Path) {
+		gz.gziphandler.ServeHTTP(w, r)
+	} else {
+		gz.original.ServeHTTP(w, r)
+	}
+}
+
 func main() {
 	hook := logrusly.NewLogglyHook(logglyToken, "https://logs-01.loggly.com/bulk/", logrus.InfoLevel, "mockserver", "origin")
 	loggly.Hooks.Add(hook)
 
 	http.HandleFunc("/", handler)
 	loggly.Infof("Starting server on %v", *httpAddr)
-	log.Fatal(http.ListenAndServe(*httpAddr, WriteLog(gziphandler.GzipHandler(http.DefaultServeMux))))
+	log.Fatal(http.ListenAndServe(*httpAddr, WriteLog(newgzipfilterhandler(http.DefaultServeMux))))
 }
