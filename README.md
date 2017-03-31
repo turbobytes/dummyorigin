@@ -57,7 +57,9 @@ When a server gets a request, it does the following.
 
 ### Special error generator
 
-When the server receives request in the format `GET /err/<code>` it returns with http status `<code>`
+When the server receives request in the format `GET /err/<code>` it returns with http status `<code>`.
+
+`<code>` must be between 400 and 599. The URL should not have trailing slash.
 
 Example:
 
