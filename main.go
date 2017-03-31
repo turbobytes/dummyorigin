@@ -40,15 +40,15 @@ func init() {
 	flag.Parse()
 	if !*noFetchAssets {
 		flist := map[string]string{
-			"/15kb.png":  "https://upload.wikimedia.org/wikipedia/en/6/66/Circle_sampling.png",
-			"/15kb.jpg":  "http://static.cdnplanet.com/static/rum/15kb-image.jpg",
-			"/100kb.jpg": "http://static.cdnplanet.com/static/rum/100kb-image.jpg",
-			"/10kb.js":   "https://rum.turbobytes.com/static/rum/rum.js",
-			"/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js",
+			"/15kb.png":  "https://en.wikipedia.org/wiki/File:BlueBellsOfScotland.PNG",
+			"/15kb.jpg":  "https://en.wikipedia.org/wiki/File:Joseph_Dudley.jpg",
+			"/100kb.jpg": "https://en.wikipedia.org/wiki/File:Procnias_tricarunculata.jpg",
+			"/13kb.js":   "https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js",
+			"/160kb.js":  "https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js",
 			"/86kb.js":   "https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js",
 			"/100kb.js":  "https://cdn.jsdelivr.net/angular.bootstrap/2.5.0/ui-bootstrap.min.js",
-			"/10mb.mp4":  "https://tdispatch.com/wp-content/uploads/2014/11/tdispatch-10MB-MP4-.mp4?_=2",
-			"/150mb.avi": "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_stereo.avi",
+			"/11mb.mp4":  "https://archive.org/download/IFeelLove/IFeelLoveWeb_512kb.mp4",                                      //CC-Attribution-Noncommercial-Share Alike 3.0 United States https://archive.org/details/IFeelLove
+			"/108mb.avi": "https://archive.org/download/UCONN_2014_Parade_in_Hartford_CT/UCONN_2014_Parade_in_Hartford_CT.mp4", //CC-Attribution-ShareAlike https://archive.org/details/ACMwest.orgACM_West_opening
 		}
 		//Ensure assets directory exists
 		os.Mkdir(*assetPath, os.ModePerm)
