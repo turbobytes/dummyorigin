@@ -52,5 +52,36 @@ When a server gets a request, it does the following.
 2. It looks at querystrings and sets headers using key as header name and value as header value. so `?foo=bar` would become `Foo: bar`. Header names are canonicalized as per `net/http`
 3. It adds response header `X-Tb-Time` with current time. This is done because most proxies override the `Date` header.
 4. [http.ServeFile](https://golang.org/pkg/net/http/#ServeFile). 404 if resource is missing, 301 to `/` for index.html. `http.ServeFile` might decide to overwrite some headers set in step 2
-5. [gziphandler.GzipHandler](https://godoc.org/github.com/NYTimes/gziphandler#GzipHandler) from package `github.com/nytimes/gziphandler` handles gzip. 
+5. [gziphandler.GzipHandler](https://godoc.org/github.com/NYTimes/gziphandler#GzipHandler) from package `github.com/nytimes/gziphandler` handles gzip.
 6. The request and response details are written to console and optionally to [loggly](https://www.loggly.com/) if `LOGGLY_TOKEN` environment variable is set.
+
+### Special error generator
+
+When the server receives request in the format `GET /err/<code>` it returns with http status `<code>`
+
+Example:
+
+```
+$ curl --compress -v 127.0.0.1:10808/err/418?coffee=espresso
+* Hostname was NOT found in DNS cache
+*   Trying 127.0.0.1...
+* Connected to 127.0.0.1 (127.0.0.1) port 10808 (#0)
+> GET /err/418?Coffee=espresso HTTP/1.1
+> User-Agent: curl/7.35.0
+> Host: 127.0.0.1:10808
+> Accept: */*
+> Accept-Encoding: deflate, gzip
+>
+< HTTP/1.1 418 I'm a teapot
+< Access-Control-Allow-Origin: *
+< Coffee: espresso
+< Content-Type: text/plain; charset=utf-8
+< X-Content-Type-Options: nosniff
+< X-Tb-Time: 2017-03-31 16:10:49.620647429 +0700 ICT
+< Date: Fri, 31 Mar 2017 09:10:49 GMT
+< Content-Length: 11
+<
+Error: 418
+* Connection #0 to host 127.0.0.1 left intact
+$
+```

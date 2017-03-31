@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -136,7 +137,7 @@ func WriteLog(handle http.Handler) http.HandlerFunc {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func stampHeaders(w http.ResponseWriter, r *http.Request) {
 	//Static headers, which can be overridden by QS
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	r.ParseForm()
@@ -149,8 +150,30 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	//w.Header().Set("content-type", "image/png")
 	w.Header().Set("X-TB-time", time.Now().String())
-	//w.Write(pixel)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	stampHeaders(w, r)
 	http.ServeFile(w, r, *assetPath+r.URL.Path)
+}
+
+//genErr generates error
+//No trailing slash
+//Error codes between 400 - 599 are acceptable
+func genErr(w http.ResponseWriter, r *http.Request) {
+	stampHeaders(w, r)
+	components := strings.Split(r.URL.Path, "/")
+	codeStr := components[len(components)-1] //Get the portion after the last "/"
+	code, err := strconv.Atoi(codeStr)
+	if err != nil {
+		http.Error(w, err.Error()+"\nPerhaps you have a trailing slash", http.StatusBadRequest)
+		return
+	}
+	if code < 400 || code > 599 {
+		http.Error(w, "Code must be between 400 - 600", http.StatusBadRequest)
+		return
+	}
+	http.Error(w, "Error: "+codeStr, code)
 }
 
 //gzipfilterhandler is proxy to gziphandler.GzipHandler to only compress certain types
@@ -186,6 +209,7 @@ func main() {
 	loggly.Hooks.Add(hook)
 
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/err/", genErr)
 	loggly.Infof("Starting server on %v", *httpAddr)
 	log.Fatal(http.ListenAndServe(*httpAddr, WriteLog(newgzipfilterhandler(http.DefaultServeMux))))
 }
