@@ -9,3 +9,10 @@ else
 	docker build -t $(IMAGE) .
 	docker tag $(IMAGE) $(IMAGE):$(TAG)
 endif
+
+clean:
+ifeq ("$(IMAGE)","")
+	$(error IMAGE is not specified)
+else
+	docker images $(IMAGE) | grep -Ev 'TAG|latest|none' | awk '{print $2}' | xargs -I '{}' docker rmi '$(IMAGE):{}'
+endif
